@@ -26,6 +26,8 @@ import jeepraktikum1.client.transport.ProtocolParser;
  * @author Sebastian
  */
 public class JEEPraktikum1Client {
+	
+	// TTTEST
 
     /**
      * @param args the command line arguments
