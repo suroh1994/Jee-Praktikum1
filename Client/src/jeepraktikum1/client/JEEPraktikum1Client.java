@@ -10,15 +10,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-import jeepraktikum1.transport.Request;
-import jeepraktikum1.transport.RequestIF;
-import jeepraktikum1.transport.ResponseIF;
+import jeepraktikum1.client.services.IService;
 import jeepraktikum1.client.transport.ProtocolParser;
 
 /**
@@ -26,15 +24,49 @@ import jeepraktikum1.client.transport.ProtocolParser;
  * @author Sebastian
  */
 public class JEEPraktikum1Client {
-	
-	// TTTEST
 
+    private String host;
+    private int port;
+    
+    private Socket socket;
+
+    public JEEPraktikum1Client(String host, int port) {
+        this.host = host;
+        this.port = port;
+    }
+    
+    private void connectToHost(){
+        try {
+            System.out.printf("connecting to %s:%d...\n", host, port);
+            socket = new Socket(InetAddress.getByName(host), port);
+            System.out.println("Connected!");
+        } catch (IOException ioe) {
+            System.err.println("failed to open socket.");
+            ioe.printStackTrace();
+        }
+    }
+    
+    public boolean isConnected() {
+        return socket != null;
+    }
+    
+    private void closeConnection() {
+        try{
+            if (socket != null) {
+                socket.close();
+            }
+        }catch (IOException ioe) {
+            System.err.println("failed to close socket.");
+            ioe.printStackTrace();
+        }
+    }
+    
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Please provide a server ip:");
+        System.out.println("Please provide a server ip or press ENTER for default:");
         String ip = "0.0.0.0";
         int port = 4567;
         final String input = scanner.nextLine();
@@ -43,11 +75,23 @@ public class JEEPraktikum1Client {
             System.out.println("Please provide a server port:");
             port = scanner.nextInt();
         }
-
-        System.out.printf("connecting to %s:%d...\n", ip, port);
+        JEEPraktikum1Client client = new JEEPraktikum1Client(ip, port);
+        
+        client.connectToHost();
+        if (client.isConnected()){
+            printMenu();
+            while(true) {
+                int selection = scanner.nextInt();
+            }
+        }
+        /*
         try {
-            Socket socket = new Socket(InetAddress.getByName(ip), port);
+            socket = new Socket(InetAddress.getByName(ip), port);
             System.out.println("Connected!");
+            
+            printMenu();
+            //get selection
+            int selection = scanner.nextInt();
             OutputStream outStream = socket.getOutputStream();
 
             objectTest(outStream);
@@ -64,9 +108,31 @@ public class JEEPraktikum1Client {
         } catch (Exception ioe) {
             System.err.println("failed to open socket");
             ioe.printStackTrace();
+        } finally {
+            if (socket != null) {
+                try{
+                    socket.close();
+                } catch (Exception e) {
+                    System.err.printf("Error closing socket: %s\n", e.getMessage());
+                    e.printStackTrace();
+                }
+            }
         }
-
+        */
     }
+    
+    private static void printMenu(){
+        System.err.println("Please select one of the following options:");
+        Method[] options = IService.class.getMethods();
+        int i = 0;
+        for (Method o : options) {
+            System.out.printf("(%d) %s\n", i, o.getName());
+            i++;
+        }
+        System.out.printf("(%d) Print this menu\n", i);
+    }
+    
+    
 
     private static void objectTest(OutputStream mOutStream) throws IOException {
         ObjectOutputStream oos = new ObjectOutputStream(mOutStream);
