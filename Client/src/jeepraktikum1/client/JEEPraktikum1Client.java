@@ -6,6 +6,8 @@
 package jeepraktikum1.client;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -38,11 +40,11 @@ public class JEEPraktikum1Client {
     
     private void connectToHost(){
         try {
-            System.out.printf("connecting to %s:%d...\n", host, port);
+            System.out.printf("Connecting to %s:%d...\n", host, port);
             socket = new Socket(InetAddress.getByName(host), port);
             System.out.println("Connected!");
         } catch (IOException ioe) {
-            System.err.println("failed to open socket.");
+            System.err.println("Failed to open socket.");
             ioe.printStackTrace();
         }
     }
@@ -57,7 +59,7 @@ public class JEEPraktikum1Client {
                 socket.close();
             }
         }catch (IOException ioe) {
-            System.err.println("failed to close socket.");
+            System.err.println("Failed to close socket.");
             ioe.printStackTrace();
         }
     }
@@ -94,29 +96,49 @@ public class JEEPraktikum1Client {
                 break;
             default:
                 List<Serializable> params = new ArrayList<>();
+                
                 System.out.println("Please enter the phonenumber for the searchrequest:");
                 params.add(scanner.nextInt());
                 System.out.println("Please enter the ordernumber for the searchrequest:");
                 params.add(scanner.nextInt());
+                
                 try{
-                sendRequest(methods[option].getName(), params);
+                    connectToHost();
+                    if (isConnected()){
+                        List<Serializable> entry = sendRequest(methods[option].getName(), params);
+                        for (Serializable e : entry) {
+                            System.out.println(e.toString());
+                        }
+                    }
+                    closeConnection();
                 } catch (IOException ioe) {
                     System.err.println("Error sending request.");
                     ioe.printStackTrace();
+                } catch (ClassNotFoundException cnfe){
+                    System.err.println("Received an unknown object.");
+                    cnfe.printStackTrace();
+                } catch (Exception e){
+                    System.out.printf("Error received from server %s", e.getMessage());
+                    e.printStackTrace();
                 }
-                System.err.println("TestDefault");
         }
     }
     
-    private void sendRequest(String name, List<Serializable> parameters) throws IOException {
+    private List<Serializable> sendRequest(String name, List<Serializable> parameters) throws Exception {
         OutputStream os = socket.getOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(os);
-        
+
         List<Serializable> req = ProtocolParser.makeRequest(name, parameters);
 
         oos.writeObject(req);
-        oos.close();
-        os.close();
+        
+        InputStream is = socket.getInputStream();
+        ObjectInputStream ois = new ObjectInputStream(is);
+        
+        Object resObj = ois.readObject();
+
+        List<Serializable> res = ProtocolParser.parseResponse(resObj);
+        return res;
     }
             
     /**
@@ -135,57 +157,17 @@ public class JEEPraktikum1Client {
         }
         JEEPraktikum1Client client = new JEEPraktikum1Client(ip, port);
         
-        client.connectToHost();
-        if (client.isConnected()){
-            printMenu();
-            while(true) {
-                try{
-                    int selection = scanner.nextInt();
-                    
-                    client.handleOption(selection, scanner);
-                } catch (InputMismatchException ime) {
-                    System.err.println("Invalid input! Please only use integers.");
-                    scanner.next();
-                } catch (InvalidParameterException ipe) {
-                    System.err.println(ipe.getMessage());
-                }
+        printMenu();
+        while(true) {
+            try{
+                int selection = scanner.nextInt();
+                client.handleOption(selection, scanner);
+            } catch (InputMismatchException ime) {
+                System.err.println("Invalid input! Please only use integers.");
+                scanner.next();
+            } catch (InvalidParameterException ipe) {
+                System.err.println(ipe.getMessage());
             }
         }
-        /*
-        try {
-            socket = new Socket(InetAddress.getByName(ip), port);
-            System.out.println("Connected!");
-            
-            printMenu();
-            //get selection
-            int selection = scanner.nextInt();
-            OutputStream outStream = socket.getOutputStream();
-
-            objectTest(outStream);
-
-            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-            try {
-                List<Serializable> response = ProtocolParser.parseResponse(ois.readObject());
-                System.err.println(response);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            socket.close();
-        } catch (Exception ioe) {
-            System.err.println("failed to open socket");
-            ioe.printStackTrace();
-        } finally {
-            if (socket != null) {
-                try{
-                    socket.close();
-                } catch (Exception e) {
-                    System.err.printf("Error closing socket: %s\n", e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-        }
-        */
-    }
-    
+    }   
 }
