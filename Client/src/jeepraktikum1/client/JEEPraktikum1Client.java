@@ -6,14 +6,15 @@
 package jeepraktikum1.client;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 import jeepraktikum1.client.services.IService;
@@ -61,6 +62,63 @@ public class JEEPraktikum1Client {
         }
     }
     
+    private static void printMenu(){
+        System.out.println("Please select one of the following options:");
+        Method[] options = IService.class.getMethods();
+        int i = 0;
+        for (Method o : options) {
+            System.out.printf("(%d) %s\n", i, o.getName());
+            i++;
+        }
+        System.out.printf("(%d) Print this menu\n", i++);
+        System.out.printf("(%d) Exit the program\n", i);
+    }
+    
+    private void handleOption(int option, Scanner scanner) {
+        Method[] methods = IService.class.getMethods();
+        
+        if (option > methods.length + 1 || option < 0){
+            throw new InvalidParameterException("The given Parameter is out of range.");
+        }
+        
+        switch (option - methods.length){
+            case 0:
+                printMenu();
+                break;
+            case 1:
+                System.err.println("Terminating program.");
+                if (isConnected()){
+                    closeConnection();
+                }
+                System.exit(0);
+                break;
+            default:
+                List<Serializable> params = new ArrayList<>();
+                System.out.println("Please enter the phonenumber for the searchrequest:");
+                params.add(scanner.nextInt());
+                System.out.println("Please enter the ordernumber for the searchrequest:");
+                params.add(scanner.nextInt());
+                try{
+                sendRequest(methods[option].getName(), params);
+                } catch (IOException ioe) {
+                    System.err.println("Error sending request.");
+                    ioe.printStackTrace();
+                }
+                System.err.println("TestDefault");
+        }
+    }
+    
+    private void sendRequest(String name, List<Serializable> parameters) throws IOException {
+        OutputStream os = socket.getOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(os);
+        
+        List<Serializable> req = ProtocolParser.makeRequest(name, parameters);
+
+        oos.writeObject(req);
+        oos.close();
+        os.close();
+    }
+            
     /**
      * @param args the command line arguments
      */
@@ -81,7 +139,16 @@ public class JEEPraktikum1Client {
         if (client.isConnected()){
             printMenu();
             while(true) {
-                int selection = scanner.nextInt();
+                try{
+                    int selection = scanner.nextInt();
+                    
+                    client.handleOption(selection, scanner);
+                } catch (InputMismatchException ime) {
+                    System.err.println("Invalid input! Please only use integers.");
+                    scanner.next();
+                } catch (InvalidParameterException ipe) {
+                    System.err.println(ipe.getMessage());
+                }
             }
         }
         /*
@@ -121,26 +188,4 @@ public class JEEPraktikum1Client {
         */
     }
     
-    private static void printMenu(){
-        System.err.println("Please select one of the following options:");
-        Method[] options = IService.class.getMethods();
-        int i = 0;
-        for (Method o : options) {
-            System.out.printf("(%d) %s\n", i, o.getName());
-            i++;
-        }
-        System.out.printf("(%d) Print this menu\n", i);
-    }
-    
-    
-
-    private static void objectTest(OutputStream mOutStream) throws IOException {
-        ObjectOutputStream oos = new ObjectOutputStream(mOutStream);
-        List<Serializable> tmp = new ArrayList<>();
-        tmp.add(new Integer(12));
-        tmp.add(new Integer(2));
-        List<Serializable> req = ProtocolParser.makeRequest("getRow", tmp);
-
-        oos.writeObject(req);
-    }
 }
