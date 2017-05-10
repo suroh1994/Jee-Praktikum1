@@ -88,7 +88,7 @@ public class JEEPraktikum1Client {
                 printMenu();
                 break;
             case 1:
-                System.err.println("Terminating program.");
+                System.out.println("Terminating program.");
                 if (isConnected()){
                     closeConnection();
                 }
@@ -118,7 +118,7 @@ public class JEEPraktikum1Client {
                     System.err.println("Received an unknown object.");
                     cnfe.printStackTrace();
                 } catch (Exception e){
-                    System.out.printf("Error received from server %s", e.getMessage());
+                    System.out.println("Error received from server");
                     e.printStackTrace();
                 }
         }
@@ -157,9 +157,9 @@ public class JEEPraktikum1Client {
         }
         JEEPraktikum1Client client = new JEEPraktikum1Client(ip, port);
         
-        printMenu();
         while(true) {
             try{
+                printMenu();
                 int selection = scanner.nextInt();
                 client.handleOption(selection, scanner);
             } catch (InputMismatchException ime) {
