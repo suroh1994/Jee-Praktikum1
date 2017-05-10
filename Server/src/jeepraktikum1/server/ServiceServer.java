@@ -10,41 +10,17 @@ import java.net.ServerSocket;
 
 /**
  *
- * @author Sebastian
+ * @author Lars
  */
-public class JEEPraktikum1Server implements Runnable {
+public class ServiceServer implements Runnable {
 	
 	final int serverPort;
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        try {
-        	int port = 4567;
-        	// if diferent port is specified in arguments use it.
-        	if(args != null && args.length == 1) {
-        		port = Integer.parseInt(args[0]);
-        	}
-        	
-            // register mysql connector
-            Class.forName("com.mysql.jdbc.Driver").newInstance();
-                        
-            final Thread serverThread = new Thread( new JEEPraktikum1Server(port) );
-            serverThread.start();
-            serverThread.join();
-
-        } catch (Exception e) {
-        	System.err.println("Server initialization failed! Server was not started!");
-        	e.printStackTrace();
-        }
-    }
     
     /**
      * constructor for server
      * @param port
      */
-    public JEEPraktikum1Server(int port) {
+    public ServiceServer(int port) {
     	serverPort = port;
     }
 
