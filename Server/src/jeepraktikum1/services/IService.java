@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package jeepraktikum1.server.services;
+package jeepraktikum1.services;
 
 import java.io.Serializable;
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.List;
  *
  * @author Sebastian
  */
-public interface IService extends Serializable {
+public interface IService {
     List<Serializable> getRow(Integer phonenumber, Integer ordernumber) throws Exception;
     List<Serializable> getDate(Integer phonenumber, Integer ordernumber) throws Exception;
     List<Serializable> getTime(Integer phonenumber, Integer ordernumber) throws Exception;
